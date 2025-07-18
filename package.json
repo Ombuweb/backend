@@ -1,0 +1,18 @@
+{
+  "name": "vocali-backend",
+  "version": "1.0.0",
+  "description": "Backend for Vocali",
+  "scripts": {
+    "start": "serverless offline",
+    "lint": "eslint .",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@jest/globals": "^30.0.4",
+    "eslint": "^9.31.0",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
+    "typescript-eslint": "^8.37.0"
+  }
+}
