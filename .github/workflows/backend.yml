@@ -2,10 +2,13 @@ name: Backend CI
 
 on:
   pull_request:
-    types: [opened]
+
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -13,19 +16,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18.x'
+          node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
 
-      - name: Cache pnpm dependencies
-        uses: actions/cache@v3
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+          version: 10
 
       - name: Install dependencies
         run: pnpm install
@@ -37,7 +35,7 @@ jobs:
         run: pnpm test.backend
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
