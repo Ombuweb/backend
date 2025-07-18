@@ -5,12 +5,15 @@
   "scripts": {
     "start": "serverless offline",
     "lint": "eslint .",
-    "test": "jest"
+    "lint:fix": "eslint . --fix",
+    "test": "jest",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@jest/globals": "^30.0.4",
     "eslint": "^9.31.0",
+    "husky": "^9.1.7",
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
     "typescript-eslint": "^8.37.0"
