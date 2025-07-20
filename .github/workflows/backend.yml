@@ -41,7 +41,7 @@ jobs:
         run: pnpm add serverless --save-dev
 
       - name: Deploy Serverless
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        if: github.event.pull_request.merged == true
         run: serverless deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
