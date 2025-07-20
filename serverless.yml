@@ -46,9 +46,3 @@ functions:
       - httpApi:
           path: /
           method: post
-  transcribeAudioInRealtime:
-    handler: handlers/transcribeAudioInRealtime.transcribeAudioInRealtime
-    events:
-      - httpApi:
-          path: /realtime
-          method: post
