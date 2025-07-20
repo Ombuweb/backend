@@ -3,11 +3,41 @@ org: invoxmedics
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: vocali
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: backend
+service: transcriptionService
 
 provider:
   name: aws
   runtime: nodejs22.x
+
+resources:
+  Resources:
+    TranscriptionBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: transcription-bucket
+    TranscriptionTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: TranscriptionTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: transcriptionId
+            AttributeType: S
+          - AttributeName: audioS3Key
+            AttributeType: S
+          - AttributeName: audioFileSize
+            AttributeType: N
+          - AttributeName: transcriptionS3Key
+            AttributeType: S
+          - AttributeName: status
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: transcriptionId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
 
 functions:
   transcribeAudioFile:
