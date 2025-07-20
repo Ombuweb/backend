@@ -41,8 +41,10 @@ jobs:
         run: pnpm add serverless --save-dev
 
       - name: Deploy Serverless
+        uses: serverless/github-action@v3.2
+        with:
+          args: deploy
         if: github.event.pull_request.merged == true
-        run: serverless deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
