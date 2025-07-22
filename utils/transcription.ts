@@ -8,18 +8,21 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { BatchClient } from '@speechmatics/batch-client';
+import {
+  BatchClient,
+  CreateJobResponse,
+  RetrieveTranscriptResponse,
+} from '@speechmatics/batch-client';
 import { MIME_TYPES } from './mime-types';
-import { RetrieveTranscriptResponse } from '@speechmatics/batch-client';
 
 const dynamoClient = new DynamoDBClient({ region: 'eu-north-1' });
 const s3Client = new S3Client({ region: 'eu-north-1' });
 
-async function transcribeAudio(
+async function createTranscriptionJob(
   fileBlob: Blob,
   fileName: string,
   fileType: string
-): Promise<string | RetrieveTranscriptResponse> {
+): Promise<ReturnType<typeof BatchClient.prototype.createTranscriptionJob>> {
   const SPEECHMACTICS_API_KEY = process.env.SPEECHMACTICS_API_KEY;
   if (!SPEECHMACTICS_API_KEY) {
     throw new Error('SPEECHMACTICS_API_KEY is not set');
@@ -32,24 +35,26 @@ async function transcribeAudio(
   try {
     const file = new File([fileBlob], fileName, { type: fileType });
 
-    const response = await client.transcribe(
-      file,
-      {
-        transcription_config: {
-          language: 'en',
-        },
+    const response = await client.createTranscriptionJob(file, {
+      transcription_config: {
+        language: 'en',
       },
-      'json-v2'
-    );
+      tracking: {
+        reference: fileName, // Use the file name as a reference
+      },
+      notification_config: [
+        // Callback URL for transcription completion
+        {
+          url: 'https://4371ec4bd9a5.ngrok-free.app/api/webhook', // local host webhook
+          contents: ['transcript', 'data'],
+          auth_headers: [
+            `Authorization: Bearer ${process.env.CALLBACK_SECRET_TOKEN}`,
+          ],
+        },
+      ],
+    });
 
     console.log('Transcription finished!');
-
-    console.log(
-      // Transcripts can be strings when the 'txt' format is chosen
-      typeof response === 'string'
-        ? response
-        : response.results.map((r) => r.alternatives?.[0].content).join(' ')
-    );
 
     return response;
   } catch (error) {
@@ -153,7 +158,7 @@ async function createTranscriptionInDynamoDB(
 
 async function updateTranscriptionStatusInDynamoDB(
   fileName: string,
-  status: string
+  transcriptionJob: CreateJobResponse
 ): Promise<void> {
   const transcriptionTableName = process.env.TRANSCRIPTION_TABLE_NAME;
 
@@ -167,7 +172,7 @@ async function updateTranscriptionStatusInDynamoDB(
       '#status': 'status',
     },
     ExpressionAttributeValues: {
-      ':status': { S: status },
+      ':status': { S: JSON.stringify(transcriptionJob) },
     },
   });
 
@@ -181,7 +186,7 @@ async function updateTranscriptionStatusInDynamoDB(
 }
 
 export {
-  transcribeAudio,
+  createTranscriptionJob,
   getAudioFileFromS3,
   saveTranscriptionToS3,
   createTranscriptionInDynamoDB,

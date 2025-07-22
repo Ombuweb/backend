@@ -2,7 +2,7 @@ import { S3NotificationEvent } from '../utils/types';
 import {
   createTranscriptionInDynamoDB,
   getAudioFileFromS3,
-  transcribeAudio,
+  createTranscriptionJob,
   updateTranscriptionStatusInDynamoDB,
 } from '../utils/transcription';
 
@@ -29,7 +29,7 @@ export const transcribeAudioFile = async (
 
     await createTranscriptionInDynamoDB(fileName, record.s3.object.size);
 
-    const transcriptionResult = await transcribeAudio(
+    const transcriptionResult = await createTranscriptionJob(
       audioBuffer,
       fileName,
       fileType
@@ -38,13 +38,13 @@ export const transcribeAudioFile = async (
     console.log('Transcription result:', transcriptionResult);
 
     if (transcriptionResult) {
-      await updateTranscriptionStatusInDynamoDB(fileName, 'COMPLETED');
+      await updateTranscriptionStatusInDynamoDB(fileName, transcriptionResult);
     }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: 'Audio transcription successful',
+        message: 'Transcription job successfully started',
       }),
     };
   } catch (error) {
