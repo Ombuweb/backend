@@ -17,6 +17,7 @@ provider:
   runtime: nodejs22.x
   region: eu-north-1
   environment:
+    CALLBACK_SECRET_TOKEN: oursecrettoken123
     BUCKET_NAME: transcription-bucket-${self:provider.region}-${self:app}
     TRANSCRIPTION_TABLE_NAME: TranscriptionTable
   iamRoleStatements:
@@ -31,6 +32,7 @@ provider:
     - Effect: Allow
       Action:
         - dynamodb:PutItem
+        - dynamodb:UpdateItem
       Resource: arn:aws:dynamodb:eu-north-1:398497927794:table/TranscriptionTable
 
 resources:
