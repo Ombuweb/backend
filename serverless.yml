@@ -5,16 +5,50 @@ app: vocali
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: transcriptionService
 
+plugins:
+  - serverless-ssm-fetch
+
+custom:
+  serverlessSsmFetch:
+    SPEECHMACTICS_API_KEY: /speechmatics-api-key~true
+
 provider:
   name: aws
   runtime: nodejs22.x
+  region: eu-north-1
+  environment:
+    BUCKET_NAME: transcription-bucket-${self:provider.region}-${self:app}
+    TRANSCRIPTION_TABLE_NAME: TranscriptionTable
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject # permission needed to generate the pre-signed url for uploading the file
+        - s3:ListBucket # permission needed to list the bucket
+        - s3:GetObject # permission needed to read the audio file
+      Resource:
+        - arn:aws:s3:::${self:provider.environment.BUCKET_NAME} # Bucket itself for ListBucket
+        - arn:aws:s3:::${self:provider.environment.BUCKET_NAME}/* # Objects within the bucket for PutObject
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: arn:aws:dynamodb:eu-north-1:398497927794:table/TranscriptionTable
 
 resources:
   Resources:
     TranscriptionBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: transcription-bucket
+        BucketName: transcription-bucket-${self:provider.region}-${self:app}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - '*'
+              AllowedMethods:
+                - PUT
+                - POST
+                - GET
+              AllowedOrigins:
+                - 'http://localhost:3000'
     TranscriptionTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -22,33 +56,23 @@ resources:
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: transcriptionId
-            AttributeType: S
-          - AttributeName: audioS3Key
-            AttributeType: S
-          - AttributeName: audioFileSize
-            AttributeType: N
-          - AttributeName: transcriptionS3Key
-            AttributeType: S
-          - AttributeName: status
-            AttributeType: S
-          - AttributeName: createdAt
-            AttributeType: S
         KeySchema:
-          - AttributeName: transcriptionId
+          - AttributeName: userId
             KeyType: HASH
+
         BillingMode: PAY_PER_REQUEST
 
 functions:
   transcribeAudioFile:
     handler: handlers/transcribeAudioFile.transcribeAudioFile
     events:
-      - httpApi:
-          path: /
-          method: post
-  transcribeAudioInRealtime:
-    handler: handlers/transcribeAudioInRealtime.transcribeAudioInRealtime
+      - s3:
+          bucket: ${self:provider.environment.BUCKET_NAME}
+          event: s3:ObjectCreated:Put # Triggered when a new audio file is uploaded to the S3 bucket
+          existing: true # Ensures the function works with an existing bucket
+  getUploadUrl:
+    handler: handlers/getUploadUrl.getUploadUrl
     events:
       - httpApi:
-          path: /realtime
-          method: post
+          method: POST
+          path: /upload-url

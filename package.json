@@ -6,8 +6,7 @@
     "start": "serverless offline",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "jest",
-    "prepare": "husky"
+    "test": "jest"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
@@ -17,5 +16,12 @@
     "jest": "^30.0.4",
     "ts-jest": "^29.4.0",
     "typescript-eslint": "^8.37.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.848.0",
+    "@aws-sdk/client-s3": "^3.848.0",
+    "@aws-sdk/s3-request-presigner": "^3.848.0",
+    "@speechmatics/batch-client": "^5.1.0",
+    "serverless-ssm-fetch": "^2.0.0"
   }
 }
